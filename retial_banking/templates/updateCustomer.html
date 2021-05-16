@@ -1,0 +1,97 @@
+{% extends session.get('ui','base1.html') %}
+
+
+{% block head %}
+<title>Update Customer</title>
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <form action="{{ url_for('updateCustomer') }}" method="POST">
+            <div class="form-group row">
+                <label class="col col-form-label">Customer SSN ID</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" name="ssn_id" value="{{ssn_id}}">
+                </div>
+            </div>
+    
+            <div class="form-group row">
+                <label class="col col-form-label">Old Customer Name</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{oldName}}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">New Customer Name</label>
+                <div class="col">
+                    <input type="text" name="newName" minlength="3" class="form-control" required >
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col col-form-label">Old Age</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{oldAge}}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">New Age</label>
+                <div class="col">
+                    <input type="number" name="newAge" min="18" max="120" class="form-control"  required>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col col-form-label">Old Email</label>
+                <div class="col">
+                    <input type="email" readonly class="form-control-plaintext" value="{{oldEmail}}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">New Email</label>
+                <div class="col">
+                    <input type="email" required name="newEmail" class="form-control" value="{{oldEmail}}">
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col col-form-label">Old Address</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{oldAddress}}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">New Address</label>
+                <div class="col">
+                    <input type="text" minlength="1" name="newAddress" class="form-control" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">Old State</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{oldState}}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">New State</label>
+
+                <select name="newState" id="">
+                  {% for state in states %}
+                    <option name="{{state.code}}" value="{{state.name}}" {% if oldState == state.name %}selected="selected" {%endif%}>{{state.name}} </option>
+                  {%endfor%}
+                  </select>
+              </div>
+
+            <button type="submit"  class="btn btn-primary " style="margin-left: 40%;">Update</button>
+
+        </form>
+
+    </div>
+</div>
+
+
+{% endblock %}

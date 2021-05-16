@@ -1,0 +1,29 @@
+{% extends session.get('ui','base1.html') %}
+
+
+{% block head %}
+<title>Search Customer </title>
+{% endblock %}
+
+
+{% block content %}
+
+
+<form class="form text-center" method="POST">
+    <div class="form mb-2">
+        <label class="pr-2">Customer SSN ID</label>
+        <input type="text" class="form-control text-center" style="width: 50%; margin: 5px auto;" name="ssn_id" placeholder="Enter SSN ID" required value={{autodata.ssn_id}}>
+    </div>
+    <br>
+    <div class="btn_grp" >
+        <button type="submit" formaction='/viewCustomerDetail' class="btn btn-success mb-2" >View Customer  <i class="fa fa-eye" aria-hidden="true"></i></button>
+        <button type="submit" formmethod="GET" formaction='/createAccount' class="btn btn-primary mb-2" >Create Account <i class="fa fa-address-book" aria-hidden="true"></i></button>
+        <button type="submit" formmethod="GET" formaction='{{url_for("searchAccount")}}' class="btn btn-success mb-2" >Search Account<i class="fa fa-eye" aria-hidden="true"></i></button>
+
+        <button type="submit" formaction='/searchCustomer' class="btn btn-primary mb-2" >Update Customer <i class="fa fa-pencil-square-o" aria-hidden="true"></i></button>
+        <button type="submit" formmethod="GET" formaction='/deleteCustomer' class="btn btn-danger mb-2" >Delete Customer <i class="far fa-trash-alt"></i></button>
+    </div>
+</form>
+
+
+{% endblock %}
