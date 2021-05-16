@@ -210,4 +210,35 @@ def registerCustomer():
 
     return render_template('registerCustomer.html', registerCustomer=True)
 
+@app.route('/logout')
+def logout():
+    if isLoggedin():
+        # log out by invalidating session
+        session_logout()
+        flash("You have been successfully logged out", "success")
+    else:
+        flash("You are already Logged out..", "success")
 
+    return redirect(url_for('home'))
+
+# Utility Function
+
+def session_logout():
+    session.pop('ssn_id', None)
+    session.pop('username', None)
+    session.pop('last_login',None)
+    # session.pop('ui',None)
+
+def session_login(ssn_val, username,lastLogin,acc_IP,ui_type):
+    session['ssn_id'] = ssn_val
+    session['username'] = username
+    session['last_login']=lastLogin
+    session['ui']=ui_type
+    access_ip=acc_IP
+    edb.update_logintime(ssn_val,access_ip)
+
+def isLoggedin():
+    if 'ssn_id' in session.keys():
+        return True
+    else:
+        return False
