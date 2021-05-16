@@ -242,3 +242,109 @@ def isLoggedin():
         return True
     else:
         return False
+
+
+# Search customer by SSN ID to delete or update details
+@app.route('/searchCustomer', methods=['get', 'post'])
+def searchCustomer():
+    if not isLoggedin():
+        return redirect(url_for('login'))
+    autodata = {}
+    if request.method == "GET":
+        if 'ssn_id' in request.args:
+            autodata['ssn_id'] = request.args.get('ssn_id')
+        return render_template('searchCustomer.html', searchCustomer=True, autodata=autodata)
+
+    # make a rediection while post ..
+    return redirect(url_for('updateCustomer')+"/"+request.form.get('ssn_id'))
+
+
+@app.route('/updateCustomer/<ssn_id>')
+@app.route('/updateCustomer', methods=['get', 'post', 'update'])
+def updateCustomer(ssn_id=None):
+
+    if not isLoggedin():
+        return redirect(url_for('login'))
+
+    if request.method == "GET":
+        if ssn_id == None:
+            return redirect(url_for('searchCustomer'))
+        else:
+            filter = {'ssn_id': ssn_id}
+            # Retrieving details of customer
+            result = cdb.findSSN(filter)
+            if result:
+                args = {}
+                args['ssn_id'] = result['ssn_id']
+                args['oldAge'] = result['age']
+                args['oldAddress'] = result['address']
+                args['oldName'] = result['name']
+                args['oldState']=result['state']
+                args['states']=utility.getState()
+                args['oldEmail']=result.get('email',"N/A")
+                return render_template('updateCustomer.html', updateCustomer=True, **args)
+            else:
+                flash(
+                    "Unable to find customer. Try again by entering valid SSN ID.", "danger")
+                return redirect(url_for('searchCustomer'))
+
+    regdata = {}
+
+    regdata['ssn_id'] = request.form.get('ssn_id')
+    regdata['name'] = request.form.get('newName')
+    regdata['age'] = request.form.get('newAge')
+    regdata['address'] = request.form.get('newAddress')
+    regdata['state']=request.form.get('newState')
+    regdata['email']=request.form.get('newEmail')
+    regdata['updated_time']=utility.getTime()
+    regdata['access_ip']=request.headers.get("x-forwarded-for",request.remote_addr)
+
+    #sanity check now
+
+    if len(regdata['name'])<3:
+        flash("Name Should be of minimum 3 Characters ","danger")
+        return redirect(url_for('updateCustomer')+"/"+regdata['ssn_id'])
+
+    if not utility.isNameValid(regdata['name']):
+        flash("Entered Name is not Valid ","danger")
+        return redirect(url_for('updateCustomer')+"/"+regdata['ssn_id'])
+
+    
+    if not utility.isNameValid(regdata['address']):
+        flash("Entered Address is not Valid ","danger")
+        return redirect(url_for('updateCustomer')+"/"+regdata['ssn_id'])
+
+    
+    if len(regdata['address'])<3:
+        flash("Address Should be of minimum 3 Characters ","danger")
+        return redirect(url_for('updateCustomer')+"/"+regdata['ssn_id'])
+
+    try:
+        if int(regdata['age'])<18:
+            flash("Customer should be of minimum 18 years old to Register ","danger")
+            return redirect(url_for('updateCustomer')+"/"+regdata['ssn_id'])
+    except:
+            flash("Customer should be of minimum 18 years old to Register ","danger")
+            return redirect(url_for('updateCustomer')+"/"+regdata['ssn_id'])
+            
+
+    if not utility.isStateValid(regdata['state']):
+        flash("Select State from dropdown correctly ","danger")
+        return redirect(url_for('updateCustomer')+"/"+regdata['ssn_id'])
+
+
+    result, err = cdb.updateSSN(regdata)
+
+    if result:
+        flash("Customer Details Updated Successfully", "success")
+        return redirect(url_for('viewCustomerDetail')+"/"+regdata['ssn_id'])
+
+    else:
+        flash("Failed to Update  Customer  Details "+err, "danger")
+
+    return redirect(url_for('searchCustomer'))
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('error404.html')
