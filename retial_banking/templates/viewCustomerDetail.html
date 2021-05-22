@@ -1,0 +1,67 @@
+{% extends session.get('ui','base1.html') %}
+
+
+{% block head %}
+<title>View Detail {{detailTitle}}</title>
+{% endblock %}
+
+
+{% block content %}
+
+<form  method="POST">
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+
+            <div class="form-group row">
+                <label class="col col-form-label ">Customer SSN ID</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" name="ssn_id" value="{{ssn_id}}">
+                </div>
+            </div>
+    
+            <div class="form-group row">
+                <label class="col col-form-label">Customer Name</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{name}}">
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col col-form-label">Age</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{age}}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">Email</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{email}}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">Address</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{address}}">
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col col-form-label">State</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{state}}">
+                </div>
+            </div>
+
+    <div class="btn_grp">
+            <button type="submit" formaction="{{url_for('searchCustomer')}}" class="btn btn-primary mb-2" >Update Detail</button>
+            <button type="submit" formmethod="GET" formaction='{{url_for("createAccount")}}' class="btn btn-success mb-2" >Create Account <i class="fa fa-address-book" aria-hidden="true"></i></button>
+            <button type="submit" formmethod="GET" formaction='{{url_for("searchAccount")}}' class="btn btn-success mb-2" >Search Account<i class="fa fa-eye" aria-hidden="true"></i></button>
+            
+            <button type="button" onclick="window.location.href='{{ url_for('searchCustomer') }}';" class="btn btn-primary mb-2" >New Search</button>            
+        </div>
+        </div>
+</div>
+</form>
+
+
+{% endblock %}

@@ -348,3 +348,87 @@ def updateCustomer(ssn_id=None):
 @app.errorhandler(404)
 def not_found(e):
     return render_template('error404.html')
+
+
+@app.route('/viewCustomerDetail/<ssn_id>')
+@app.route('/viewCustomerDetail', methods=["GET", "POST"])
+def viewCustomerDetail(ssn_id=None):
+    if not isLoggedin():
+        return redirect(url_for('login'))
+
+    filter = {}
+    if request.method == "GET":
+        if ssn_id == None:
+            redirect(url_for('searchCustomer'))
+        else:
+            filter = {'ssn_id': ssn_id}
+    else:  # if it is a post request..
+        filter = {'ssn_id': request.form.get('ssn_id')}
+
+    # Retrieving details of customer
+    result = cdb.findSSN(filter)
+
+
+    if result:
+        args = {}
+        args['titleDetail'] = ":Customer SSN Detail"
+        args['age'] = result['age']
+        args['name'] = result['name']
+        args['address'] = result['address']
+        args['ssn_id'] = result['ssn_id']
+        args['state']=result['state']
+        args['email']=result.get('email',"N/A")
+        return render_template('viewCustomerDetail.html', viewCustomerDetail=True, **args)
+    else:
+        flash("Unable to find customer. Try again by entering valid SSN ID.", "danger")
+        return redirect(url_for('searchCustomer'))
+
+
+@app.route('/viewAllCustomer')
+def viewAllCustomer():
+
+    if not isLoggedin():
+        return redirect(url_for('login'))
+
+    customers_data = []
+    for dat in cdb.findSSN_all():
+        customers_data.append(dat)
+
+    return render_template('viewAllCustomer.html', viewAllCustomer=True, datas=customers_data)
+
+
+@app.route('/deleteCustomer', methods=['GET', 'POST'])
+def deleteCustomer():
+    if not isLoggedin():
+        return redirect(url_for('login'))
+
+    if request.method == "GET":
+        if 'ssn_id' in request.args:
+            ssn_id = request.args.get('ssn_id')
+            result = cdb.findSSN({'ssn_id': ssn_id})
+
+            if result:
+                args = {}
+                args['ssn_id'] = result['ssn_id']
+                args['oldAge'] = result['age']
+                args['oldAddress'] = result['address']
+                args['oldName'] = result['name']
+                flash(" Customer found! ", "success")
+                flash("Please confirm the details before deletion.", "danger")
+                return render_template('confirmDeleteCustomer.html', deleteCustomer=True, **args)
+
+            else:
+                flash("Customer not found! Please enter a valid SSN ID.", "danger")
+
+        return redirect(url_for('searchCustomer'))
+
+    filter = {'ssn_id': request.form.get('ssn_id')}
+
+    result = cdb.deleteSSN(filter)
+
+    if result:
+        flash("Successfully deleted customer!", "success")
+        return redirect(url_for('home'))
+    else:
+        flash("Unable to delete customer. Try again by entering valid SSN ID.", "danger")
+        return redirect(url_for('searchCustomer'))
