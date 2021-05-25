@@ -432,3 +432,186 @@ def deleteCustomer():
     else:
         flash("Unable to delete customer. Try again by entering valid SSN ID.", "danger")
         return redirect(url_for('searchCustomer'))
+
+
+@app.route('/createAccount', methods=['get', 'post'])
+def createAccount():
+    if not isLoggedin():
+        return redirect(url_for('login'))
+    cust_acc_id=""
+    autodata = {}  
+    if request.method == "GET":
+        if 'ssn_id' in request.args:
+            sid = request.args.get('ssn_id')
+            if not cdb.findSSN({'ssn_id': sid}):
+                # no such ssn exist return back to searchCustomer
+                flash(
+                    "Unable to find customer. Try again by entering valid SSN ID.", "danger")
+                return redirect(url_for('searchCustomer'))
+
+            autodata['ssn_id'] = sid
+
+        cust_acc_id = cdb.getautoAccountid()
+        flash("Auto generated Account no : "+cust_acc_id)
+        autodata['cust_acc_id'] = cust_acc_id
+        return render_template('createAccount.html', createAccount=True, autodata=autodata)
+
+    # if request id POST
+    data = {}
+
+    data['ssn_id'] = request.form.get('ssn_id')
+    data['type'] = request.form.get('type')
+    data['cust_acc_id'] = request.form.get('cust_acc_id')
+    cust_acc_id=data['cust_acc_id']
+    data['balance'] = 0.0
+    data['create_time']=utility.getTime()
+
+    data['access_ip']=request.headers.get("x-forwarded-for",request.remote_addr)
+
+
+
+    reg_cust_details=cdb.findSSN({'ssn_id': data['ssn_id']})
+
+    # save data to database.
+    if not reg_cust_details:
+        flash("No such Customer Registered with SSN_ID=" +data['ssn_id'], "danger")
+        return render_template('createAccount.html', createAccount=True, autodata={'cust_acc_id': cust_acc_id})
+
+    result, err = cdb.createAccount(data)
+
+    if result:
+        flash(f"Customer Account {data['cust_acc_id']}  Successfully", "success")
+        EMail_data={}
+        EMail_data['type']=utility.EMAIL_OPENED_Account
+        EMail_data['ssn_id']=reg_cust_details['ssn_id']
+        EMail_data['name']=reg_cust_details['name']
+        EMail_data['cust_acc_id']=data['cust_acc_id']
+
+        EMail_data['to']=reg_cust_details.get('email',None)
+        if EMail_data['to'] !=None:
+            utility.sendEmail(EMail_data)
+        return redirect(url_for('home'))
+    else:
+        flash("Failed to Create Customer Account: "+err, "danger")
+
+    return render_template('createAccount.html', createAccount=True, autodata=data)
+
+@app.route('/searchAccount', methods=['get', 'post'])
+def searchAccount():
+    if not isLoggedin():
+        return redirect(url_for('login'))
+    is_redirect=False
+    redirectto="" 
+    acc_id=""
+    ssn=""
+    result=None
+    if request.method == "GET":
+        if "redirect" in request.args:
+            is_redirect=True
+            redirectto=request.args.get("redirect")
+
+        if 'ssn_id'  in request.args:
+            ssn=request.args.get('ssn_id')
+
+            result=cdb.findAcc_all_of_ssnid(str(ssn))
+        elif 'cust_acc_id' in request.args:
+            temp=cdb.findAccount({'cust_acc_id':request.args.get('cust_acc_id')})
+            if temp:
+                result=[temp]
+                ssn=temp['ssn_id']
+                acc_id=temp['cust_acc_id']
+                flash("Account Found .","success")
+                return redirect(url_for(redirectto)+"?cust_acc_id="+acc_id)
+            else:
+                flash(f"Account ID :{request.args.get('cust_acc_id')} does not exist ","danger")
+                return redirect(url_for('searchAccount'))
+
+        else:
+            return render_template('searchAccount.html',searchAccount=True,is_redirect=str(is_redirect),redirectto=redirectto)
+    
+    else: #post requests
+        ssn = request.form.get('ssn_id')
+        account=request.form.get('cust_acc_id')
+        if ssn=="" and account=="":
+            #both are empty redirect 
+            flash("Please enter Either SSN ID or Customer Account ID! ", "danger")
+            return redirect(url_for('searchAccount'))
+        
+        is_redirect=True if request.form.get("is_redirect")=='True' else False
+        redirectto=str(request.form.get("redirectto"))
+
+        print("LOGGG  ",is_redirect,redirectto)
+        if ssn!="":
+            #checking of ssn will be done only hence making acc_id blank
+            acc_id=""
+            is_redirect=False #make it False in case ssn id is entered..
+            #first find if the ssn id is valid or not
+            if not cdb.findSSN({'ssn_id':ssn}):
+                flash("Invalid SSN entered! Please type correct SSN ID","danger")
+                return redirect(url_for('searchAccount'))
+            
+            result = cdb.findAcc_all_of_ssnid(str(ssn))
+
+
+        if account!="":
+            acc_id=account
+            temp=cdb.findAccount({'cust_acc_id':acc_id})
+            if temp:
+                result=[temp]
+                ssn=temp['ssn_id']
+                #found by account id hence redirect directly to particular redirection
+                if is_redirect and redirectto!="":
+                    flash("Account Found ","success")
+                    return redirect(url_for(redirectto)+"?cust_acc_id="+acc_id)
+
+
+    if result:
+        account_data = []
+        for data in result:
+                account_data.append(data)
+
+        flash("Successfully found Account!", "success")
+        return render_template('viewAllAccount.html', datas=account_data,cust_ssn_id=ssn)
+    else:
+        if acc_id!="":
+            flash("Could not find the account! Please enter valid  Account ID", "danger")
+        else:
+            flash("Could not find any Customer With that SSN ID! Please enter valid  SSN ID", "danger")
+
+        return redirect(url_for('searchAccount'))
+
+
+@app.route('/deleteAccount', methods=['GET', 'POST'])
+def deleteAccount():
+    if not isLoggedin():
+        return redirect(url_for('login'))
+
+    if request.method == "GET":
+        if 'cust_acc_id' in request.args:
+            cust_acc_id = request.args.get('cust_acc_id')
+
+            # find account no and details using ssn_id
+            # result = cdb.findAccount({'cust_acc_id': cust_acc_id})
+            result = cdb.findAccount({'cust_acc_id':cust_acc_id})
+
+            if result:
+                args = {}
+                args['ssn_id'] = result['ssn_id']
+                args['cust_acc_id'] = result['cust_acc_id']
+                args['type'] = result['type']
+                args['balance'] = result['balance']
+                flash("Please confirm the details before deletion.", "danger")
+                return render_template('confirmDeleteAccount.html', deleteAccount=True, **args)
+            else:
+                flash("Customer not found! Please enter a valid SSN ID.", "danger")
+
+        return redirect(url_for('searchAccount'))
+
+    filter = {'cust_acc_id': request.form.get('accID')}
+    result = cdb.deleteAccount(filter)
+    if result:
+        flash("Successfully deleted account! :"+filter['cust_acc_id'], "success")
+        return redirect(url_for('searchAccount')+"?ssn_id="+result['ssn_id'])
+    else:
+        flash("Unable to delete customer. Try again by entering valid SSN ID.", "danger")
+        return redirect(url_for('searchAccount'))
