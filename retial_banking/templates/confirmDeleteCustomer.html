@@ -1,0 +1,47 @@
+{% extends session.get('ui','base1.html') %}
+
+{% block head %}
+<title>Confirm Delete Customer</title>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <form action="{{ url_for('deleteCustomer') }}" method="POST">
+            <div class="form-group row">
+                <label class="col col-form-label">Customer SSN ID</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" name="ssn_id" value="{{ssn_id}}">
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col col-form-label">Customer Name</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{oldName}}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">Address</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{oldAddress}}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">Age</label>
+                <div class="col">
+                    <input type="text" readonly class="form-control-plaintext" value="{{oldAge}}">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary form-inline" style="margin-left: 05%;">Confirm Delete</button>
+            <button type="button"  onclick="window.location.href='{{ url_for('home') }}';" class="btn btn-primary form-inline" style="margin-left: 22%;">Cancel</button>
+
+        </form>
+
+    </div>
+</div>
+
+
+{{ a }} {% endblock %}

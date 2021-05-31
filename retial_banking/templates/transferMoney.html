@@ -1,0 +1,37 @@
+{% extends session.get('ui','base1.html') %}
+
+{% block head %}
+<title>Transfer Money</title>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <form action="{{ url_for('transferMoney') }}" method="POST">
+            <div class="form-group row">
+                <label class="col col-form-label">Source Account Number</label>
+                <div class="col">
+                    <input type="text" class="form-control" name="source_acc_no" placeholder="Source A/C No." required>
+                </div>
+            </div>
+            <div class="form-group row ">
+                <label class="col col-form-label ">Target Account Number</label>
+                <div class="col ">
+                    <input type="text " class="form-control " name="target_acc_no" placeholder="Target A/C No. " required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col col-form-label">Transfer Amount</label>
+                <div class="col">
+                    <input type="number" class="form-control" name="amount_transferred" placeholder="Enter Amount" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary " style="margin-left: 40%;" onclick="this.disabled=true;this.form.submit();">Transfer</button>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

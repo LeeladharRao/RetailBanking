@@ -615,3 +615,128 @@ def deleteAccount():
     else:
         flash("Unable to delete customer. Try again by entering valid SSN ID.", "danger")
         return redirect(url_for('searchAccount'))
+
+
+@app.route('/deposit',methods=['GET','POST'])
+def deposit():
+    if not isLoggedin():
+        return redirect(url_for('login'))
+    cust_acc_id=""
+    if request.method=="GET":
+        if "cust_acc_id" in request.args:
+            cust_acc_id=request.args.get('cust_acc_id')
+            result=cdb.findAccount({'cust_acc_id':cust_acc_id})
+            if result:
+                return render_template('deposit.html',deposit=True,data=result)
+        return redirect(url_for('searchAccount')+"?redirect=deposit")
+
+    data={}
+
+    data['cust_acc_id']=request.form.get('cust_acc_id')
+    data['transaction_type']="credit"
+    data['amount']=request.form.get('amount')
+    data['remark']="self deposit"
+    data['executive_ssn_id']=session.get('ssn_id')
+    data['access_ip']=request.headers.get("x-forwarded-for",request.remote_addr)
+
+    result,err=cdb.deposit(data)
+    if result:
+        flash(f"Amount {data['amount']} deposited Successfully to Account ID :{data['cust_acc_id']}","success")
+        return redirect(url_for('home'))
+    else:
+        flash(f"Error in Transaction :{err}","danger ")
+        return redirect(url_for('home'))
+
+
+@app.route('/withdraw',methods=['GET','POST'])
+def withdraw():
+    if not isLoggedin():
+        return redirect(url_for('login'))
+    cust_acc_id=""
+    if request.method=="GET":
+        if "cust_acc_id" in request.args:
+            cust_acc_id=request.args.get('cust_acc_id')
+            result=cdb.findAccount({'cust_acc_id':cust_acc_id})
+            if result:
+                return render_template('withdraw.html',deposit=True,data=result)
+        return redirect(url_for('searchAccount')+"?redirect=withdraw")
+
+
+    data={}
+
+    data['cust_acc_id']=request.form.get('cust_acc_id')
+    data['transaction_type']="debit"
+    data['amount']=request.form.get('amount')
+    data['remark']="self withdrawl"
+    data['executive_ssn_id']=session.get('ssn_id')
+    data['access_ip']=request.headers.get("x-forwarded-for",request.remote_addr)
+
+
+    result,err=cdb.withdraw(data)
+    if result:
+        flash(f"Amount {data['amount']} Withdrawn Successfully from  Account ID :{data['cust_acc_id']}","success")
+        return redirect(url_for('home'))
+    else:
+        flash(f"Error in Transaction :{err}","danger ")
+        return redirect(url_for('home'))
+
+
+@app.route("/transfer",methods=["GET","POST"])
+def transferMoney():
+    if not isLoggedin():
+        return redirect(url_for('login'))
+
+    if request.method=="GET":
+        return render_template('transferMoney.html')
+    data={}
+    data['amount']=request.form.get('amount_transferred')
+    data['source_acc']=request.form.get('source_acc_no')
+    data['dest_acc']=request.form.get('target_acc_no')
+    data['access_ip']=request.headers.get("x-forwarded-for",request.remote_addr)
+    data['executive_ssn_id']=session.get('ssn_id')
+
+
+    result,err=cdb.transfer(data)
+    if result:
+        flash(f"From Account: {data['source_acc']} transferred Rs. {data['amount']} Successfully to {data['dest_acc']} ","success")
+    else:
+        flash(f"Failed To transfer Money "+str(err),"danger")
+    return redirect(url_for('home'))
+
+@app.route('/viewTransaction')
+def viewTransaction():
+    if not isLoggedin():
+        return redirect(url_for('login'))
+    cust_id=""
+    trans_id=""
+    TRANS_DATA=False
+
+    if request.method=="GET":
+        if 'cust_acc_id' in request.args :
+            cust_id=request.args.get('cust_acc_id')
+        if 'trans_id' in request.args:
+            trans_id=request.args.get('trans_id')
+
+        if cust_id=="" and trans_id=="":
+            flash("Please Enter Either Customer Account ID or Transaction Id ","danger")
+            return render_template('searchTransaction.html')
+        if cust_id!="":
+            TRANS_DATA=cdb.findAllTransaction(cust_id)
+            trans_id==""
+        elif trans_id!="":
+            TRANS_DATA=cdb.findTransaction({'trans_id':trans_id})
+            if TRANS_DATA:
+                cust_id=TRANS_DATA['cust_acc_id']
+                TRANS_DATA=[(TRANS_DATA)]
+        else:
+            return render_template('searchTransaction.html')
+  
+    if TRANS_DATA:
+        return render_template('viewAllTransaction.html',datas=TRANS_DATA.sort('epoch_time',-1),cust_acc_id=cust_id)
+    else:
+        if trans_id=="":
+            flash(f"No Transaction Exist for Account id {cust_id}","danger")
+        else:
+            flash(f"Transaction {trans_id} Doesn't Exist","danger")
+
+        return redirect(url_for('home'))

@@ -1,0 +1,41 @@
+{% extends session.get('ui','base1.html') %}
+
+
+{% block head %}
+<title>View All Transaction</title>
+{% endblock %}
+
+
+{% block content %}
+
+<div>
+    <h4 class="font-weight-normal text-center m-4">Customer ACC ID: <span style="font-size: 2rem;"> {{cust_acc_id}} </span></h4>
+</div>
+
+<table class="table table-striped ">
+
+    <thead class="font-weight-normal">
+        <tr>
+            <th scope="col ">Transaction ID</th>
+            <th scope="col ">Type</th>
+            <th scope="col ">Amount</th>
+            <th scope="col ">Balance</th>
+            <th scope="col ">Time</th>
+            <th scope="col ">Remark</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for data in datas %}
+        <tr>
+            <th scope="row ">{{data.trans_id}}</th>
+            <th scope="row ">{{data.transaction_type}}</th>
+            <td>{{ data.amount }}</td>
+            <td>{{data.balance}}</td>
+            <td>{{data.transaction_time}}</td>
+            <td>{{data.remark}}</td>
+        </tr>
+        {%endfor%}
+    </tbody>
+</table>
+
+{% endblock %}
